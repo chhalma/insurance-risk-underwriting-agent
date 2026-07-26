@@ -1,0 +1,10 @@
+model:
+  path: ml-model/xgboost_risk_model.json
+  preprocessor_path: ml-model/insurance_preprocessor.pkl
+
+# Thresholds are the 25th/75th percentile of "charges" in the training data
+# (see ml-model/insurance-risk-model-training.ipynb, df.describe()).
+# Bottom quartile = Low, middle 50% = Medium, top quartile = High.
+risk_thresholds:
+  low_max: 4740.29
+  medium_max: 16639.91
