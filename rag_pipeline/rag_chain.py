@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Protocol
 
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
@@ -9,6 +10,12 @@ from langchain_openai import AzureChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 load_dotenv()
+
+
+class PolicySectionRetriever(Protocol):
+    """Anything that can look up relevant policy sections for a query — local FAISS or Azure AI Search."""
+
+    def retrieve(self, query: str, k: int = 3) -> list[dict]: ...
 
 RAG_ROOT = Path(__file__).resolve().parent
 POLICY_DOCUMENTS_DIR = RAG_ROOT / "policy_documents"
@@ -73,7 +80,7 @@ class PolicyRetriever:
 class PolicyAnswerChain:
     """Combines retrieval with LLM generation to produce a grounded, cited answer."""
 
-    def __init__(self, retriever: PolicyRetriever):
+    def __init__(self, retriever: PolicySectionRetriever):
         self.retriever = retriever
         self.llm = AzureChatOpenAI(
             azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],

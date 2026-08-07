@@ -19,3 +19,4 @@ faiss-cpu
 pypdf
 langchain-openai
 python-dotenv
+azure-search-documents

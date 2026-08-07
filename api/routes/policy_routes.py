@@ -2,10 +2,10 @@ from fastapi import APIRouter
 
 from api.models.policy_schemas import PolicyAnswerResponse, PolicyQueryRequest, PolicyQueryResponse
 from api.services.policy_service import PolicyService
-from rag_pipeline.rag_chain import PolicyRetriever
+from rag_pipeline.azure_search_retriever import AzureSearchPolicyRetriever
 
 policy_router = APIRouter()
-_retriever = PolicyRetriever()
+_retriever = AzureSearchPolicyRetriever()
 _service = PolicyService(_retriever)
 
 

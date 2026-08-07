@@ -1,13 +1,13 @@
 from functools import cached_property
 
 from api.models.policy_schemas import PolicyAnswerResponse, PolicyQueryResponse, PolicySection
-from rag_pipeline.rag_chain import PolicyAnswerChain, PolicyRetriever
+from rag_pipeline.rag_chain import PolicyAnswerChain, PolicySectionRetriever
 
 
 class PolicyService:
     """Business logic: turns a natural-language query into relevant policy sections."""
 
-    def __init__(self, retriever: PolicyRetriever):
+    def __init__(self, retriever: PolicySectionRetriever):
         self.retriever = retriever
 
     def search(self, query: str, k: int) -> PolicyQueryResponse:
