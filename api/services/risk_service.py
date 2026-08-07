@@ -1,13 +1,13 @@
 import pandas as pd
 
-from api.models.schemas import ApplicantRequest, PredictionResponse, RiskFactor
-from api.repository.model_repository import ModelRepository
+from api.models.risk_model_schemas import ApplicantRequest, PredictionResponse, RiskFactor
+from api.repository.risk_model_repository import RiskModelRepository
 
 
 class RiskService:
     """Business logic: turns applicant data into a scored, explained prediction."""
 
-    def __init__(self, repository: ModelRepository):
+    def __init__(self, repository: RiskModelRepository):
         self.repository = repository
 
     def _categorize(self, predicted_charge: float) -> str:

@@ -1,12 +1,12 @@
 import pytest
 
-from api.repository.model_repository import ModelRepository
+from api.repository.risk_model_repository import RiskModelRepository
 from api.services.risk_service import RiskService
 
 
 @pytest.fixture(scope="session")
 def repository():
-    return ModelRepository()
+    return RiskModelRepository()
 
 
 @pytest.fixture(scope="session")

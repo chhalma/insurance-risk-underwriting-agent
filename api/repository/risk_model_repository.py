@@ -9,7 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 CONFIG_PATH = PROJECT_ROOT / "config.yaml"
 
 
-class ModelRepository:
+class RiskModelRepository:
     """Owns access to the trained model artifacts (model, preprocessor, explainer)."""
 
     def __init__(self, config_path: Path = CONFIG_PATH):

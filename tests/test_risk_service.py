@@ -1,4 +1,4 @@
-from api.models.schemas import ApplicantRequest
+from api.models.risk_model_schemas import ApplicantRequest
 from api.services.risk_service import RiskService
 
 

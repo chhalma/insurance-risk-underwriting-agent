@@ -44,3 +44,14 @@ def test_predict_rejects_invalid_smoker_value():
     response = client.post("/predict", json=payload)
 
     assert response.status_code == 422
+
+
+def test_policy_search_returns_relevant_sections():
+    payload = {"query": "What is covered for hospital stays?", "k": 2}
+
+    response = client.post("/policy/search", json=payload)
+    body = response.json()
+
+    assert response.status_code == 200
+    assert len(body["results"]) == 2
+    assert all("content" in result and "source" in result for result in body["results"])
