@@ -1,0 +1,23 @@
+# Slim requirements for the deployed API (Azure App Service / Functions).
+# Excludes local-only prototype dependencies (langchain-community, langchain-huggingface,
+# sentence-transformers, faiss-cpu) used solely by rag_pipeline/rag_chain.py's local FAISS
+# demo — that code path is never imported by the deployed app, so these aren't needed there.
+# Also excludes dev/test-only tools (pytest, httpx).
+# See requirements.txt for full local-development dependencies.
+
+fastapi
+uvicorn[standard]
+pydantic
+joblib
+scikit-learn==1.6.1
+xgboost==3.2.0
+shap
+pandas
+numpy
+pyyaml
+langchain-core
+langchain-text-splitters
+pypdf
+python-dotenv
+azure-search-documents
+openai

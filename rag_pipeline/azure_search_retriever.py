@@ -15,21 +15,28 @@ from azure.search.documents.indexes.models import (
     VectorSearchProfile,
 )
 from azure.search.documents.models import VectorizedQuery
-from langchain_openai import AzureOpenAIEmbeddings
+from dotenv import load_dotenv
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from openai import AzureOpenAI
 
-from rag_pipeline.rag_chain import POLICY_DOCUMENTS_DIR, load_policy_documents
+from rag_pipeline.document_loader import POLICY_DOCUMENTS_DIR, load_policy_documents
+
+load_dotenv()
 
 EMBEDDING_DIMENSIONS = 1536
 
 
-def _get_embeddings() -> AzureOpenAIEmbeddings:
-    return AzureOpenAIEmbeddings(
+def _get_openai_client() -> AzureOpenAI:
+    return AzureOpenAI(
         azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
         api_key=os.environ["AZURE_OPENAI_API_KEY"],
-        azure_deployment=os.environ["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"],
         api_version=os.environ["AZURE_OPENAI_API_VERSION"],
     )
+
+
+def _embed_documents(client: AzureOpenAI, texts: list[str]) -> list[list[float]]:
+    response = client.embeddings.create(model=os.environ["AZURE_OPENAI_EMBEDDING_DEPLOYMENT"], input=texts)
+    return [item.embedding for item in response.data]
 
 
 def _get_search_index_client() -> SearchIndexClient:
@@ -85,8 +92,8 @@ def upload_policy_documents() -> int:
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=150)
     chunks = splitter.split_documents(documents)
 
-    embeddings = _get_embeddings()
-    vectors = embeddings.embed_documents([chunk.page_content for chunk in chunks])
+    client = _get_openai_client()
+    vectors = _embed_documents(client, [chunk.page_content for chunk in chunks])
 
     search_docs = []
     for i, (chunk, vector) in enumerate(zip(chunks, vectors)):
@@ -111,11 +118,11 @@ class AzureSearchPolicyRetriever:
     """Retrieves relevant policy sections from Azure AI Search using hybrid (vector + keyword) search."""
 
     def __init__(self):
-        self.embeddings = _get_embeddings()
+        self.client = _get_openai_client()
         self.search_client = _get_search_client()
 
     def retrieve(self, query: str, k: int = 3) -> list[dict]:
-        query_vector = self.embeddings.embed_query(query)
+        query_vector = _embed_documents(self.client, [query])[0]
         vector_query = VectorizedQuery(vector=query_vector, k_nearest_neighbors=k, fields="content_vector")
 
         results = self.search_client.search(

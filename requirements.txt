@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 pydantic
 joblib
-scikit-learn
+scikit-learn==1.6.1
 xgboost==3.2.0
 shap
 pandas
@@ -17,6 +17,6 @@ langchain-text-splitters
 sentence-transformers
 faiss-cpu
 pypdf
-langchain-openai
 python-dotenv
 azure-search-documents
+openai

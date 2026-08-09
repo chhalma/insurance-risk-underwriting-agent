@@ -1,41 +1,14 @@
-import os
 from pathlib import Path
-from typing import Protocol
 
-from dotenv import load_dotenv
-from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_openai import AzureChatOpenAI
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-load_dotenv()
+from rag_pipeline.document_loader import POLICY_DOCUMENTS_DIR, RAG_ROOT, load_policy_documents
 
-
-class PolicySectionRetriever(Protocol):
-    """Anything that can look up relevant policy sections for a query — local FAISS or Azure AI Search."""
-
-    def retrieve(self, query: str, k: int = 3) -> list[dict]: ...
-
-RAG_ROOT = Path(__file__).resolve().parent
-POLICY_DOCUMENTS_DIR = RAG_ROOT / "policy_documents"
 INDEX_PATH = RAG_ROOT / "vector_store" / "faiss_index"
 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
-
-
-def load_policy_documents(policy_documents_dir: Path = POLICY_DOCUMENTS_DIR) -> list:
-    """Loads every PDF in the policy documents folder into LangChain Documents."""
-    pdf_paths = sorted(policy_documents_dir.glob("*.pdf"))
-    if not pdf_paths:
-        raise FileNotFoundError(
-            f"No PDF files found in {policy_documents_dir}. Add a policy document before building the index."
-        )
-
-    documents = []
-    for pdf_path in pdf_paths:
-        documents.extend(PyPDFLoader(str(pdf_path)).load())
-    return documents
 
 
 def build_index(documents: list, embeddings: HuggingFaceEmbeddings) -> FAISS:
@@ -46,7 +19,11 @@ def build_index(documents: list, embeddings: HuggingFaceEmbeddings) -> FAISS:
 
 
 class PolicyRetriever:
-    """Retrieves relevant policy document sections to ground underwriting explanations."""
+    """Retrieves relevant policy document sections to ground underwriting explanations.
+
+    Local FAISS prototype — free, runs entirely on-device. See azure_search_retriever.py
+    for the cloud-backed equivalent used by the deployed API.
+    """
 
     def __init__(
         self,
@@ -75,40 +52,6 @@ class PolicyRetriever:
             }
             for doc in results
         ]
-
-
-class PolicyAnswerChain:
-    """Combines retrieval with LLM generation to produce a grounded, cited answer."""
-
-    def __init__(self, retriever: PolicySectionRetriever):
-        self.retriever = retriever
-        self.llm = AzureChatOpenAI(
-            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-            api_key=os.environ["AZURE_OPENAI_API_KEY"],
-            azure_deployment=os.environ["AZURE_OPENAI_DEPLOYMENT"],
-            api_version=os.environ["AZURE_OPENAI_API_VERSION"],
-        )
-
-    def answer(self, query: str, k: int = 3) -> dict:
-        sections = self.retriever.retrieve(query, k=k)
-        context = "\n\n".join(
-            f"[Source: page {section['page']}]\n{section['content']}" for section in sections
-        )
-
-        prompt = (
-            "You are an insurance policy assistant. Answer the question using ONLY the "
-            "policy excerpts below. If the excerpts don't contain the answer, say so — "
-            "don't guess.\n\n"
-            f"Policy excerpts:\n{context}\n\n"
-            f"Question: {query}"
-        )
-
-        response = self.llm.invoke(prompt)
-
-        return {
-            "answer": response.content,
-            "sources": sections,
-        }
 
 
 if __name__ == "__main__":

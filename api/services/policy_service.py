@@ -1,7 +1,7 @@
 from functools import cached_property
 
 from api.models.policy_schemas import PolicyAnswerResponse, PolicyQueryResponse, PolicySection
-from rag_pipeline.rag_chain import PolicyAnswerChain, PolicySectionRetriever
+from rag_pipeline.policy_answer_chain import PolicyAnswerChain, PolicySectionRetriever
 
 
 class PolicyService:
