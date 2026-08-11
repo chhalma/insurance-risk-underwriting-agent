@@ -31,8 +31,15 @@ jobs:
           python -m venv antenv
           source antenv/bin/activate
           pip install -r requirements-deploy.txt
-                
-      # By default, when you enable GitHub CI/CD integration through the Azure portal, the platform automatically sets the SCM_DO_BUILD_DURING_DEPLOYMENT application setting to true. This triggers the use of Oryx, a build engine that handles application compilation and dependency installation (e.g., pip install) directly on the platform during deployment. Hence, we exclude the antenv virtual environment directory from the deployment artifact to reduce the payload size. 
+
+      # Azure's Oryx build engine (which installs dependencies during deployment) looks
+      # specifically for a file named requirements.txt, not requirements-deploy.txt.
+      # Overwrite it here so the deployed app gets our slim dependency set, not the full
+      # local-dev one (which includes PyTorch/FAISS and would blow past Free tier limits).
+      - name: Use slim requirements for the Azure build
+        run: cp requirements-deploy.txt requirements.txt
+
+      # By default, when you enable GitHub CI/CD integration through the Azure portal, the platform automatically sets the SCM_DO_BUILD_DURING_DEPLOYMENT application setting to true. This triggers the use of Oryx, a build engine that handles application compilation and dependency installation (e.g., pip install) directly on the platform during deployment. Hence, we exclude the antenv virtual environment directory from the deployment artifact to reduce the payload size.
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
@@ -63,4 +70,4 @@ jobs:
         with:
           app-name: 'underwriting-assistance-api'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.__publishingprofilesecretname__ }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
